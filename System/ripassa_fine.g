@@ -1,7 +1,7 @@
 ; ripassa_fine.g
 ; Called by PostProcessing/ripassa_T1.py after the T1 pass of each layer.
-; Parks T1, reselects T0 without tool change macros and returns T0 to the position
-; saved by ripassa_inizio.g.
+; Homes T1 (U axis), reselects T0 without tool change macros and returns T0 to
+; the position saved by ripassa_inizio.g.
 ; Use: M98 P"ripassa_fine.g" F<travel speed mm/min>
 
 if !exists(global.ripassaPos)
@@ -10,7 +10,7 @@ if !exists(global.ripassaPos)
 var feed = exists(param.F) ? param.F : 6000
 
 M400
-G1 U{move.axes[3].max} F{var.feed}														; Park T1 (as tfree1.g)
+G28 U																					; Home T1 (homeu.g)
 M400
 
 T0 P0																					; Select T0, no tool change macros

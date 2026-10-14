@@ -4,7 +4,7 @@
 At the end of every layer printed by T0 (left head) it inserts a pass of T1
 (right head) that retraces the same XY path, D mm higher and without extruding:
 
-    M98 P"ripassa_inizio.g" Z<layer Z> D<lift> F<travel speed>
+    M98 P"ripassa_inizio.g" Z<layer Z> D<lift>
     G1 X.. Y.. F..        ; T0 layer path, E and Z removed
     ...
     M98 P"ripassa_fine.g" F<travel speed>
@@ -54,7 +54,7 @@ def build_pass(layer_z, start_xy, moves, args):
         return []
     out = [
         f"; --- ripassa T1: layer Z={fmt(layer_z)} ---",
-        f'M98 P"ripassa_inizio.g" Z{fmt(layer_z)} D{fmt(args.dz)} F{fmt(args.travel)}',
+        f'M98 P"ripassa_inizio.g" Z{fmt(layer_z)} D{fmt(args.dz)}',
         f"G1 X{fmt(start_xy[0])} Y{fmt(start_xy[1])} F{fmt(args.travel)}",
     ]
     for kind, gcode, words in moves:
