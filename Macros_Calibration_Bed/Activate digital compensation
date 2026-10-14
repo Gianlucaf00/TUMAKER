@@ -1,0 +1,7 @@
+;0:/macros/Calibrations/Bed/Activate digital compensation
+G29 S1
+echo >"0:/data/height_map" "G29 S1"
+;M118 S"Digital Calibration is active"
+set global.i18n[1] = "macros_Calibrations_Bed_Activate digital compensation_01"
+M98 P"messages.g"
+M118 S{global.i18n[3]}

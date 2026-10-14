@@ -1,0 +1,129 @@
+; ==========================================================
+; 0:/macros/Calibrations/Tools/Sets up tools
+; ==========================================================
+
+; ----------------------------------------------------------
+; SAFETY CHECK
+; Prevent execution while printing or paused
+; ----------------------------------------------------------
+if state.status = "processing" || state.status = "paused"
+	;M118 S{"Cannot be used during "^state.status}
+	set global.i18n[1] = "status_check"
+	M98 P"messages.g"
+	M118 S{global.i18n[3]}
+	M99
+
+
+; ----------------------------------------------------------
+; USER CONFIRMATION
+; Ask before changing the current tool configuration
+; ----------------------------------------------------------
+;M291 R"Tool selection" P"Are you sure you want to change the configuration of your current tools?" S3
+set global.i18n[1] = "macros_Calibrations_Tools_Sets up tools_01"
+M98 P"messages.g"
+M291 R{global.i18n[2]} P{global.i18n[3]} S3
+
+
+; ----------------------------------------------------------
+; LOCAL DATA OF CATALOG DATA
+; ----------------------------------------------------------
+M98 P"0:/data/head_catalog.g"
+;set global.data[0] = {"HR","PL"}          ; Supported head types
+;set global.data[1] = {"HR","PL","NONE"}   ; Selectable head options
+;set global.data[2] = {"Left","Right"}     ; Physical positions
+var head_catalog = {global.data[0], global.data[1], global.data[2]}
+var toolOptions  = var.head_catalog[0]
+var i            = 0
+var response     = {vector(#global.toolType, null)}
+
+
+; ----------------------------------------------------------
+; HEAD SELECTION LOOP
+; ----------------------------------------------------------
+while var.i < #global.toolType
+	if var.i > 0
+		set var.toolOptions = var.head_catalog[1]
+
+	;M291 R"Tool_0 selection" P"Choose the spindle available on the tool_0" S4 K{"HR","PL"}
+	set global.i18n[1] = "macros_Calibrations_Tools_Sets up tools_02"
+	M98 P"messages.g" X{var.i}
+	M291 R{global.i18n[2]} P{global.i18n[3]} S4 K{var.toolOptions}
+
+	set var.response[var.i] = input
+	set var.i = var.i + 1
+
+
+; ----------------------------------------------------------
+; APPLY USER SELECTION TO global.toolType[]
+; ----------------------------------------------------------
+set var.i = 0
+while var.i < #global.toolType
+	if var.response[var.i] = 0
+		set global.toolType[var.i] = "HR"
+	elif var.response[var.i] = 1
+		set global.toolType[var.i] = "PL"
+		;echo >"0:/data/MaterialSensorT0" "M950 J1 C""!0.io4.in"""
+		;M98 P"0:/data/MaterialSensorT0"
+		;echo >"0:/data/MaterialSensorT1" "M950 J2 C""!1.io3.in"""
+		;M98 P"0:/data/MaterialSensorT1"
+	else
+		set global.toolType[var.i] = ""
+	
+	set global.ContPellets[var.i] = -1
+	set var.i = var.i + 1
+
+if exists(global.toolType[1])
+	echo >"0:/data/ActiveFeeder" "set global.ContPellets = "^global.ContPellets
+else
+	echo >"0:/data/ActiveFeeder" "set global.ContPellets = {"^global.ContPellets[0]^",}"
+
+
+; ----------------------------------------------------------
+; CONFIGURE EACH PHYSICAL TOOL
+; ----------------------------------------------------------
+set var.i = 0
+while var.i < #global.toolType
+	M98 P{"config_" ^ global.toolType[var.i] ^ ".g"} X{var.i} Y{var.head_catalog[2][var.i]}
+	set var.i = var.i + 1
+M98 P"config_sync.g"
+
+; ----------------------------------------------------------
+; PERSIST TOOL SELECTION TO FILE
+; ----------------------------------------------------------
+var toolSelection = global.toolType[0]
+var root          = "0:/data/selecTool"
+
+echo   >{var.root} ";Regitro de cabezales selecionados"
+echo >>>{var.root} "set global.toolType = {""" ^ global.toolType[0] ^ ""","
+
+set var.i = 1
+while var.i < #global.toolType
+	echo >>>{var.root} """" ^ global.toolType[var.i] ^ ""","
+	set var.toolSelection = var.toolSelection ^ " - " ^ global.toolType[var.i]
+	set var.i = var.i + 1
+
+echo >>{var.root} "}"
+
+
+; ----------------------------------------------------------
+; SAVE CONFIGURATION TO FLASH
+; ----------------------------------------------------------
+M500 P10:31
+
+
+; ----------------------------------------------------------
+; FINAL USER FEEDBACK
+; ----------------------------------------------------------
+;M291 R"Your new tool configuration is" P{global.data[0]" make sure everything is working properly."} S2
+set global.i18n[1] = "macros_Calibrations_Tools_Sets up tools_04"
+M98 P"messages.g" X{var.toolSelection}
+M291 R{global.i18n[2]} P{global.i18n[3]} S2
+
+
+; ----------------------------------------------------------
+; FINAL RECOMMENDATION
+; ----------------------------------------------------------
+;M291 R"END" P"It is recommended to recalibrate the height offsets, use Guided height calibration." S3 T0
+set global.i18n[1] = "macros_Calibrations_Tools_Sets up tools_05"
+M98 P"messages.g"
+M291 R{global.i18n[2]} P{global.i18n[3]} S3 T0

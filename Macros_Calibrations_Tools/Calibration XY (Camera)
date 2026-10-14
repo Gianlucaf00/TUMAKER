@@ -1,0 +1,88 @@
+;0:/macros/Calibrations/Tools/Calibration XY (Camera)
+
+if state.status = "processing" || state.status = "paused"
+	;M118 S{"Cannot be used during "^state.status}
+	set global.i18n[1] = "status_check"
+	M98 P"messages.g"
+	M118 S{global.i18n[3]}
+	M99
+
+T0 P0
+G28
+if fileexists("0:/data/PosCal_XY")
+	M98 P"0:/data/PosCal_XY"
+else
+	set global.data[0] = 0	 ;X
+	set global.data[1] = 0	 ;Y
+	set global.data[2] = 50	;Z
+
+var resp = 0
+
+while var.resp != 2
+	if var.resp = 0
+		G0 X{global.data[0]} Y{global.data[1]} Z{global.data[2]} F6000
+		;M291 R"Center Tool 0" P"Access to the <a href=""https://emberprototypes.github.io/"" target=""_blank"">camera</a> to position the tool" S3 X1 Y1 Z1
+		set global.i18n[1] = "macros_Calibrations_Tools_Calibration XY (Camera)_01"
+		M98 P"messages.g"
+		M291 R{global.i18n[2]} P{global.i18n[3]} S3 X1 Y1 Z1
+		M400
+		set global.data[0] = move.axes[0].userPosition	 ;X
+		set global.data[1] = move.axes[1].userPosition	 ;Y
+		set global.data[2] = move.axes[2].userPosition	 ;Z
+	if var.resp != 2 
+		; homeall.g
+		G91
+		G1 H1 F6000 X{-move.axes[0].max*2} Y{-move.axes[1].max*2}
+		G1 H2 F3000 X2 Y2
+		G1 H1 F60 X{-move.axes[0].max/2} Y{-move.axes[1].max/2}
+		G90
+		G0 X{global.data[0]} Y{global.data[1]} Z{global.data[2]} F6000
+		M400
+		;M291 R"Verification" P"Make sure that the position is correct before proceeding." S4 K{"Readjust","Recheck","Continue"}
+		set global.i18n[1] = "macros_Calibrations_Tools_Calibration XY (Camera)_02"
+		M98 P"messages.g"
+		M291 R{global.i18n[2]} P{global.i18n[3]} S4 K{global.i18n[4]}
+		M400
+		set var.resp = input
+
+echo >"0:/data/PosCal_XY" "set global.data[0] = "^{global.data[0]}
+echo >>"0:/data/PosCal_XY" "set global.data[1] = "^{global.data[1]}
+echo >>"0:/data/PosCal_XY" "set global.data[2] = "^{global.data[2]}
+set var.resp = 0
+
+; homeall.g
+G91
+G1 H1 F6000 X{-move.axes[0].max*2} Y{-move.axes[1].max*2} U{move.axes[3].max*2}
+G1 H2 F3000 X2 Y2 U-2
+G1 H1 F60 X{-move.axes[0].max/2} Y{-move.axes[1].max/2} F60 U{move.axes[3].max/2}
+G90
+T1 P0
+
+while var.resp != 2
+	if var.resp = 0
+		G0 X{global.data[0]} Y{global.data[1]} Z{global.data[2]} F6000
+		;M291 R"Center Tool 1" P"Access to the <a href=""https://emberprototypes.github.io/"" target=""_blank"">camera</a> to position the tool" S3 X1 Y1
+		set global.i18n[1] = "macros_Calibrations_Tools_Calibration XY (Camera)_03"
+		M98 P"messages.g"
+		M291 R{global.i18n[2]} P{global.i18n[3]} S3 X1 Y1
+		M400
+		G10 P1 Y{global.data[1]-move.axes[1].machinePosition} U{global.data[0]-move.axes[3].machinePosition}
+	if var.resp != 2
+		; homeall.g
+		G91
+		G1 H1 F6000 U{move.axes[3].max*2} Y{-move.axes[1].max*2}
+		G1 H2 F3000 U-2 Y2
+		G1 H1 F60 U{move.axes[3].max/2} Y{-move.axes[1].max/2}
+		G90
+		G0 X{global.data[0]} Y{global.data[1]} Z{global.data[2]} F6000
+		M400
+		;M291 R"Verification" P{"The offset that is set is X="^tools[1].offsets[3]^" Y="^tools[1].offsets[1]^" so make sure it is correct before proceeding."} S4 K{"Readjust","Recheck","Continue"}
+		set global.i18n[1] = "macros_Calibrations_Tools_Calibration XY (Camera)_04"
+		M98 P"messages.g"
+		M291 R{global.i18n[2]} P{global.i18n[3]} S4 K{global.i18n[4]}
+		M400
+		set var.resp = input
+
+G0 X{move.axes[0].min+1} Y{move.axes[1].min+1} U{move.axes[3].max-1} Z{move.axes[2].max-1} F{move.axes[0].speed/2}
+M400
+M500 P10:31

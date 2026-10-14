@@ -1,0 +1,31 @@
+; 0:/macros/Calibration/Tool/Set XY Offset
+
+if state.status = "processing" || state.status = "paused"
+	;M118 S{"Cannot be used during "^state.status}
+	set global.i18n[1] = "status_check"
+	M98 P"messages.g"
+	M118 S{global.i18n[3]}
+	M99
+
+;M291 R"Manual offset editor" P{"Are you sure you want to modify the current values? X="^tools[1].offsets[3]^" Y="^tools[1].offsets[1]} S3
+set global.i18n[1] = "macros_Calibration_Tool_Set XY Offset_01"
+M98 P"messages.g"
+M291 R{global.i18n[2]} P{global.i18n[3]} S3
+
+;M291 R"Offset X" P"Assign a new value for X" S6 F{tools[1].offsets[3]}
+set global.i18n[1] = "macros_Calibration_Tool_Set XY Offset_02"
+M98 P"messages.g"
+M291 R{global.i18n[2]} P{global.i18n[3]} S6 F{global.i18n[4]}
+
+G10 P1 U{input}
+;M291 R"Offset Y" P"Assign a new value for Y" S6 F{tools[1].offsets[1]}
+set global.i18n[1] = "macros_Calibration_Tool_Set XY Offset_03"
+M98 P"messages.g"
+M291 R{global.i18n[2]} P{global.i18n[3]} S6 F{global.i18n[4]}
+
+G10 P1 Y{input}
+M500 P10:31
+;M291 R"Offsets updated" P{"Offsets have been saved successfully. X="^tools[1].offsets[3]^" Y="^tools[1].offsets[1]} S2
+set global.i18n[1] = "macros_Calibration_Tool_Set XY Offset_04"
+M98 P"messages.g"
+M291 R{global.i18n[2]} P{global.i18n[3]} S2

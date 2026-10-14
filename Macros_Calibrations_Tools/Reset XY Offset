@@ -1,0 +1,26 @@
+;0:/macros/Calibrations/Tools/Reset XY Offset
+
+if state.status = "processing" || state.status = "paused"
+	;M118 S{"Cannot be used during "^state.status}
+	set global.i18n[1] = "status_check"
+	M98 P"messages.g"
+	M118 S{global.i18n[3]}
+	M99
+
+;M291 R"Reset Offset" P{"Your offset is X" ^tools[1].offsets[3]^ " Y" ^tools[1].offsets[1]} S2
+set global.i18n[1] = "macros_Calibrations_Tools_Reset XY Offset_01"
+M98 P"messages.g"
+M291 R{global.i18n[2]} P{global.i18n[3]} S2
+
+;M291 R"Reset Offset" P"Are you sure you want to delete it?" S3
+set global.i18n[1] = "macros_Calibrations_Tools_Reset XY Offset_02"
+M98 P"messages.g"
+M291 R{global.i18n[2]} P{global.i18n[3]} S3
+
+G10 P1 Z0 X0 Y0 U0
+M500 P10:31
+;M118 P0 S{"Offsets have been removed: X" ^tools[1].offsets[3]^" Y"^tools[1].offsets[1]}
+set global.i18n[1] = "macros_Calibrations_Tools_Reset XY Offset_03"
+M98 P"messages.g"
+M118 P0 S{global.i18n[3]}
+

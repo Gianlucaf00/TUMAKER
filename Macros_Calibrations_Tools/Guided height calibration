@@ -1,0 +1,76 @@
+;0:/macros/Calibrations/Tools/Guided height calibration
+
+if state.status = "processing" || state.status = "paused"
+	;M118 S{"Cannot be used during "^state.status}
+	set global.i18n[1] = "status_check"
+	M98 P"messages.g"
+	M118 S{global.i18n[3]}
+	M99
+
+var mapa = 0
+if move.compensation.file = null
+	set var.mapa = 1
+
+G29 S2
+
+T0 P0
+G28
+G90
+
+G0 Z10 F3000
+if exists(global.toolType[1])
+	G0 X{move.axes[0].max/2} Y5
+else
+	G0 X{move.axes[0].max/2} Y{move.axes[1].max-5}
+
+G0 Z0
+M400
+
+;M291 R"Paso 1" P"Afloje ligeramente los tornillos de calibración de altura hasta que el cabezal descienda suavemente y toque la base" S3 T0
+set global.i18n[1] = "macros_Calibrations_Tools_Guided_height_calibration_01"
+M98 P"messages.g"
+M291 R{global.i18n[2]} P{global.i18n[3]} S3 T0
+M400
+
+;M291 R"Paso 2" P"Apriete los tornillos de calibración de altura. Asegúrese de que el cabezal no se mueve al apretar los tornillos" S3 T0
+set global.i18n[1] = "macros_Calibrations_Tools_Guided_height_calibration_02"
+M98 P"messages.g"
+M291 R{global.i18n[2]} P{global.i18n[3]} S3 T0
+M400
+
+G0 X{move.axes[0].min} Z10 F6000
+
+if exists(global.toolType[1])
+	if global.toolType[1] != ""
+		T1 P0
+		G0 X{move.axes[0].max/2} Y5 Z10 F6000
+		G0 Z0
+		M400
+
+		;M291 R"Paso 3" P"Afloje ligeramente los tornillos de calibración de altura hasta que el cabezal descienda suavemente y toque la base" S3 T0
+		set global.i18n[1] = "macros_Calibrations_Tools_Guided_height_calibration_03"
+		M98 P"messages.g"
+		M291 R{global.i18n[2]} P{global.i18n[3]} S3 T0
+		M400
+
+		;M291 R"Paso 4" P"Apriete los tornillos de calibración de altura. Asegúrese de que el cabezal no se mueve al apretar los tornillos" S3 T0
+		set global.i18n[1] = "macros_Calibrations_Tools_Guided_height_calibration_04"
+		M98 P"messages.g"
+		M291 R{global.i18n[2]} P{global.i18n[3]} S3 T0
+		M400
+
+T0 P0
+
+G0 X{move.axes[0].min+1} Y{move.axes[1].min+1} U{move.axes[3].max-1} Z{move.axes[2].max-1} F{move.axes[0].speed/2}
+
+if var.mapa = 1
+	G29 S2
+else
+	G29 S1
+if exists(global.toolType[1])
+	if global.toolType[1] != ""
+		;M291 R"FIN" P"Se recomienda recalibrar los desfases XY." S3 T0
+		set global.i18n[1] = "macros_Calibrations_Tools_Guided height calibration_05"
+		M98 P"messages.g"
+		M291 R{global.i18n[2]} P{global.i18n[3]} S3 T0
+

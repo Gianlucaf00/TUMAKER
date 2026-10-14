@@ -1,0 +1,11 @@
+; homez.g
+; call to the house of the Y-axis
+
+M42 P3 S1                                    ; Set fan
+
+G91                                            ; Set to Relative Positioning
+G1 H1 Z{move.axes[2].max*2} F3000            ; Move
+G1 H2 Z-5 F6000                                ; Move
+G1 H1 Z{move.axes[2].max/2} F360            ; Move
+G90                                            ; Set to Absolute Positioning
+M400                                        ; Wait for current moves to finish

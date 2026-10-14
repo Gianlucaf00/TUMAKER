@@ -1,0 +1,82 @@
+;0:/macros/Calibrations/Bed/Guided manual calibration
+
+if state.status = "processing" || state.status = "paused"
+	M118 S{"Cannot be used during "^state.status}
+	M99
+
+var mapa = 0
+if move.compensation.file = null
+	set var.mapa = 1
+
+G29 S2
+
+T0 P0
+G28
+G90
+
+var puntosX = 3
+var puntosY = 3
+if fileexists("0:/data/CalibrationPoints")
+	M98 P"0:/data/CalibrationPoints"
+	M400
+	set var.puntosX = global.data[0]
+	set var.puntosY = global.data[1]
+
+var separaX = {global.area[0]/(var.puntosX-1)}
+var separaY = {global.area[1]/(var.puntosY-1)}
+var puntos = {var.puntosX*var.puntosY}
+var posicion = 1
+var Xpos = 0
+var Ypos = 0
+var respuesta = 0
+var resultado = 0
+
+G0 Z10 F3000
+G0 F6000 X{var.Xpos-sensors.probes[0].offsets[0]+10} Y{var.Ypos-sensors.probes[0].offsets[1]}
+G4 S2
+M400
+
+while var.posicion <= var.puntos
+	M400
+	G0 Z10 F3000
+	G0 F6000 X{var.Xpos-sensors.probes[0].offsets[0]+10} Y{var.Ypos-sensors.probes[0].offsets[1]}
+	G30 S-1
+	M400
+	set var.resultado = floor((sensors.probes[0].lastStopHeight+sensors.probes[0].offsets[2])*100)
+	if var.resultado >= 0 && var.resultado <= 9 || var.respuesta = 1
+		set var.respuesta = 0
+		set var.posicion = (var.posicion+1)
+		if var.Xpos <= (global.area[0]-1)
+			set var.Xpos = (var.Xpos+var.separaX)
+		else
+			set var.Xpos = 0
+			set var.Ypos = (var.Ypos+var.separaY)
+	else
+		M300 S6000 P1000
+		set global.data[0]  = var.posicion
+		set global.data[1] = var.resultado
+		;M291 R{"Posicion "^var.posicion} P{"A difference in level has been detected of "^(var.resultado)^" hundredths. Press continue when it is between 0 and 9 hundredths."} S4 K{"continue","next","cancel"}
+		set global.i18n[1] = "macros_Calibrations_Bed_Guided manual calibration_01"
+		M98 P"messages.g"
+		M291 R{global.i18n[2]} P{global.i18n[3]} S4 K{global.i18n[4]}
+		set var.respuesta = input
+		M400
+		if var.respuesta = 2
+			break;
+
+M300 S6000 P5000
+;M291 R"END" P"If necessary, do it twice" S2 T0
+set global.i18n[1] = "macros_Calibrations_Bed_Guided manual calibration_02"
+M98 P"messages.g"
+M291 R{global.i18n[2]} P{global.i18n[3]} S2 T0
+G0 X{move.axes[0].min+1} Y{move.axes[1].min+1} U{move.axes[3].max-1} Z{move.axes[2].max-1} F{move.axes[0].speed/2}
+M292
+
+if var.mapa = 1
+	G29 S2
+else
+	G29 S1
+
+echo >"0:/data/micropaso" "set global.data[0] = 0"
+
+M400
