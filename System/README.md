@@ -37,6 +37,7 @@ Alcuni file richiamati qui risiedono in `0:/data/` e **non sono presenti nel rep
 | `tfree2.g` | Rilascio T2: ripristina l'offset U di T2, fa l'homing di X e U, riporta `M579 U1` (annulla lo specchio). |
 | `tpost0.g` / `tpost1.g` | Dopo la selezione: attende la temperatura (`M116`) e torna alla posizione salvata (`G1 R2`). |
 | `tpost2.g` | Vuoto. |
+| `ripassa_inizio.g` / `ripassa_fine.g` | Ripasso di T1 a fine layer, 10 mm più in alto e senza estrudere, inserito da `PostProcessing/ripassa_T1.py`: parcheggiano una testa, selezionano l'altra senza macro di cambio tool e ripristinano la posizione di T0. Vedi `PostProcessing/README.md`. |
 
 ## Inizio e fine stampa (chiamati dallo slicer)
 

@@ -9,3 +9,4 @@ Configurazione RepRapFirmware (Duet 3) della Tumaker NX 300 Modular: IDEX a due 
 | [`Macros_Calibrations_Tools/`](Macros_Calibrations_Tools/README.md) | Macro di configurazione e calibrazione delle teste |
 | [`Sys_Slicer_Superslicer/`](Sys_Slicer_Superslicer/README.md) | Profili SuperSlicer |
 | [`System_UserSTL/`](System_UserSTL/README.md) | STL di calibrazione |
+| [`PostProcessing/`](PostProcessing/README.md) | Script SuperSlicer: ripasso di T1 a fine layer |
