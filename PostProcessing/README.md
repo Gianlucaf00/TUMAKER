@@ -28,15 +28,24 @@ Le due macro sono in `System/` e vanno copiate in `0:/sys/`:
 
 ### Configurazione in SuperSlicer
 1. **Profilo stampante "Left Only"** (start `ginicioT0.g`). La testa destra deve essere configurata (`Sets up tools`) e calibrata negli offset XY: il ripasso usa gli offset di T1.
-2. **Printer Settings → Custom G-code → After layer change G-code**: aggiungere la riga
-   ```
-   ;RIPASSA_LAYER Z=[layer_z]
-   ```
-3. **Print Settings → Output options → Post-processing scripts**: inserire il percorso completo di Python e dello script, per esempio:
+2. **Print Settings → Output options → Post-processing scripts**: inserire il percorso completo di Python e dello script, per esempio:
    ```
    "C:\Python3\python.exe" "C:\TUMAKER\PostProcessing\ripassa_T1.py" --travel 6000;
    ```
    Lo slicer aggiunge da solo, come ultimo argomento, il percorso del file G-code.
+
+I layer vengono riconosciuti dai commenti che SuperSlicer scrive già a ogni cambio layer:
+```
+;LAYER_CHANGE
+;Z:0.6
+```
+Non serve aggiungere niente nei campi Custom G-code.
+
+### Uso manuale
+Si può anche esportare il G-code senza post-processing e poi lanciare lo script a mano. Il file viene modificato direttamente, quindi conviene lavorare su una copia:
+```
+python3 ripassa_T1.py --travel 6000 "pezzo.gcode"
+```
 
 ### Opzioni
 | Opzione | Significato | Default |
@@ -46,7 +55,7 @@ Le due macro sono in `System/` e vanno copiate in `0:/sys/`:
 | `--path-speed` | Velocità di T1 sui tratti estrusi da T0 (mm/min) | velocità originale di T0 |
 
 Lo script si ferma con un errore se:
-- manca il marker `;RIPASSA_LAYER`;
+- non trova nessun commento `;LAYER_CHANGE`;
 - non trova la fine della stampa (`M98 P"gfinal.g"` o `;RIPASSA_END`);
 - il file è già stato elaborato;
 - ci sono movimenti XY relativi (`G91`).

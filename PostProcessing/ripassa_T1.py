@@ -14,10 +14,10 @@ Speeds in the T1 pass:
     (or --path-speed, if given);
   * moves that were travels get --travel.
 
-Layers are delimited by the marker written by the slicer in
-Printer Settings > Custom G-code > "After layer change G-code":
+Layers are delimited by the comments SuperSlicer writes at every layer change:
 
-    ;RIPASSA_LAYER Z=[layer_z]
+    ;LAYER_CHANGE
+    ;Z:0.6
 
 The last layer is closed by the line M98 P"gfinal.g" (end G-code) or by the
 marker ;RIPASSA_END.
@@ -31,7 +31,8 @@ import argparse
 import re
 import sys
 
-LAYER_RE = re.compile(r"^;\s*RIPASSA_LAYER\s+Z=([-+0-9.]+)", re.IGNORECASE)
+LAYER_RE = re.compile(r"^;\s*LAYER_CHANGE\b", re.IGNORECASE)
+Z_RE = re.compile(r"^;\s*Z:\s*([-+0-9.]+)", re.IGNORECASE)
 END_RE = re.compile(r'^(;\s*RIPASSA_END\b|M98\s+P"?gfinal\.g"?)', re.IGNORECASE)
 MOVE_RE = re.compile(r"^G([0-3])(?![0-9])", re.IGNORECASE)
 TOOL_RE = re.compile(r"^T(-?[0-9]+)(?![0-9])", re.IGNORECASE)
@@ -72,6 +73,7 @@ def process(lines, args):
     feed = None
     pos = [0.0, 0.0]
     layer_z = None
+    awaiting_z = False
     start_xy = None
     moves = []
     layers = 0
@@ -90,12 +92,18 @@ def process(lines, args):
             sys.exit("ripassa_T1.py: file already processed")
         code = raw.split(";", 1)[0].strip()
 
-        marker = LAYER_RE.match(raw.strip())
-        if marker:
+        if LAYER_RE.match(raw.strip()):
             flush()
-            layer_z = float(marker.group(1))
+            layer_z = None
+            awaiting_z = True
             start_xy = tuple(pos)
             moves = []
+            out.append(raw)
+            continue
+        z_comment = Z_RE.match(raw.strip())
+        if awaiting_z and z_comment:
+            layer_z = float(z_comment.group(1))
+            awaiting_z = False
             out.append(raw)
             continue
         if END_RE.match(raw.strip()):
@@ -155,7 +163,7 @@ def main():
     with open(args.gcode, encoding="utf-8", errors="surrogateescape") as f:
         lines = f.readlines()
     if not any(LAYER_RE.match(line.strip()) for line in lines):
-        sys.exit('ripassa_T1.py: marker ";RIPASSA_LAYER Z=[layer_z]" not found in the G-code')
+        sys.exit('ripassa_T1.py: no ";LAYER_CHANGE" comment found in the G-code')
     out, layers = process(lines, args)
     with open(args.gcode, "w", encoding="utf-8", errors="surrogateescape") as f:
         f.writelines(out)
