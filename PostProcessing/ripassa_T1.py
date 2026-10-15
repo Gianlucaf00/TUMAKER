@@ -55,8 +55,15 @@ def build_pass(layer_z, start_xy, moves, args):
     out = [
         f"; --- ripassa T1: layer Z={fmt(layer_z)} ---",
         f'M98 P"ripassa_inizio.g" Z{fmt(layer_z)} D{fmt(args.dz)}',
-        f"G1 X{fmt(start_xy[0])} Y{fmt(start_xy[1])} F{fmt(args.travel)}",
     ]
+    if None not in start_xy:
+        out.append(f"G1 X{fmt(start_xy[0])} Y{fmt(start_xy[1])} F{fmt(args.travel)}")
+    else:
+        # Start of the layer unknown (no XY move before it in the file):
+        # reach the end point of the first move with a straight travel.
+        _, _, first = moves[0]
+        out.append(f"G1 X{fmt(first['X'])} Y{fmt(first['Y'])} F{fmt(args.travel)}")
+        moves = moves[1:]
     for kind, gcode, words in moves:
         feed = args.travel if kind == "travel" else (args.path_speed or words["F"])
         params = "".join(f" {k}{fmt(words[k])}" for k in ("X", "Y", "I", "J", "R") if k in words)
@@ -71,7 +78,7 @@ def process(lines, args):
     tool = 0
     absolute = True
     feed = None
-    pos = [0.0, 0.0]
+    pos = [None, None]
     layer_z = None
     awaiting_z = False
     start_xy = None
@@ -139,7 +146,7 @@ def process(lines, args):
             sys.exit("ripassa_T1.py: relative XY moves (G91) are not supported")
         if has_xy:
             pos = [words.get("X", pos[0]), words.get("Y", pos[1])]
-        if layer_z is None or tool != 0 or not has_xy:
+        if layer_z is None or tool != 0 or not has_xy or None in pos:
             continue
         kind = "path" if words.get("E", 0) > 0 else "travel"
         if kind == "path" and feed is None and not args.path_speed:
